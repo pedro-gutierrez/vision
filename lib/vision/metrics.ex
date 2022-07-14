@@ -239,15 +239,21 @@ defmodule Vision.Metrics do
       defp dashboard_variable({name, spec}) do
         metric = metric!(spec)
 
+        metric_name =
+          case metric[:kind] do
+            :histogram -> "#{metric[:name]}_count"
+            _ -> metric[:name]
+          end
+
         %{
           datasource: "Prometheus",
-          definition: "label_values(#{metric[:name]}, #{name})",
+          definition: "label_values(#{metric_name}, #{name})",
           hide: 0,
           includeAll: spec[:repeat] || false,
           multi: spec[:repeat] || false,
           name: name,
           options: [],
-          query: "label_values(#{metric[:name]}, #{name})",
+          query: "label_values(#{metric_name}, #{name})",
           refresh: 1,
           sort: 0,
           type: "query"
