@@ -346,9 +346,12 @@ defmodule Vision.Metrics do
             %{expr: "rate(#{metric[:name]}#{filters}[$__rate_interval])"}
 
           {:quantile, q} ->
+            aggregate_by = ["le" | metric[:labels] || []]
+
             %{
               expr:
-                "histogram_quantile(#{q}, sum(increase(#{metric[:name]}_bucket#{filters}[$__rate_interval])) by (le))"
+                "histogram_quantile(#{q}, sum(increase(#{metric[:name]}_bucket#{filters}[$__rate_interval])) by
+              (#{Enum.join(aggregate_by, ",")}))"
             }
 
           expr when is_binary(expr) ->
