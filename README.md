@@ -2,7 +2,7 @@
 
 Simple Prometheus observability for Elixir apps
 
-## Getting started 
+## Installation 
 
 Add :vision to the list of dependencies in mix.exs:
 
@@ -14,7 +14,9 @@ def deps do
 end
 ```
 
-Then setup your connection to Grafana:
+## Configuration
+
+Setup your connection to Grafana:
 
 ```elixir
 config :myapp, Vision,
@@ -23,6 +25,8 @@ config :myapp, Vision,
     token: System.fetch_env!("GRAFANA_TOKEN")
   ]
 ```
+
+## Defining metrics and dashboards
 
 Define a module that will define both your metrics and dashboards:
 
@@ -61,7 +65,7 @@ defmodule MyApp.Metrics do
 end
 ```
 
-Finally add your metrics module to your supervision tree:
+Don't forget to add your module to your supervision tree:
 
 ```elixir
 children = [
@@ -74,5 +78,14 @@ opts = [strategy: :one_for_one, name: ...]
 Supervisor.start_link(children, opts)
 ```
 
+## Exposing metrics
+
+In your router, add a path to your prometheus metrics:
+
+```elixir
+get "/metrics" do
+  send_resp(conn, 200, Prometheus.Format.Text.format())
+end
+```
 
 
