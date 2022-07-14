@@ -60,7 +60,11 @@ defmodule Vision.Metrics do
           nil
         )
 
-        upload_dashboards()
+        if grafana_opt(:host) && grafana_opt(:token) do
+          upload_dashboards()
+        else
+          Logger.warn("Missing grafana configuration. Dashboards won't be uploaded")
+        end
       end
 
       def upload_dashboards do
@@ -342,16 +346,21 @@ defmodule Vision.Metrics do
           nil ->
             %{expr: "#{metric[:name]}#{filters}"}
 
-          :rate ->
-            %{expr: "rate(#{metric[:name]}#{filters}[$__rate_interval])"}
+          expr when expr in [:rate, :increase] ->
+            by =
+              case metric[:labels] do
+                nil -> ""
+                labels -> " by (#{Enum.join(labels, ",")})"
+              end
+
+            %{expr: "sum(#{expr}(#{metric[:name]}#{filters}[$__rate_interval]))#{by}"}
 
           {:quantile, q} ->
-            aggregate_by = ["le" | metric[:labels] || []]
+            by = ["le" | metric[:labels] || []]
 
             %{
               expr:
-                "histogram_quantile(#{q}, sum(increase(#{metric[:name]}_bucket#{filters}[$__rate_interval])) by
-              (#{Enum.join(aggregate_by, ",")}))"
+                "histogram_quantile(#{q}, sum(increase(#{metric[:name]}_bucket#{filters}[$__rate_interval])) by (#{Enum.join(by, ",")}))"
             }
 
           expr when is_binary(expr) ->
@@ -542,9 +551,8 @@ defmodule Vision.Metrics do
 
       defp grafana_opt(key) do
         @otp_app
-        |> Application.get_env(Vision)
-        |> Keyword.fetch!(:grafana)
-        |> Keyword.fetch!(key)
+        |> Application.get_env(Vision, [])
+        |> get_in([:grafana, key])
       end
     end
   end
