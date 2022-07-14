@@ -533,7 +533,7 @@ defmodule Vision.Metrics do
 
       defp grafana_opt(key) do
         @otp_app
-        |> Application.get_env(Torch)
+        |> Application.get_env(Vision)
         |> Keyword.fetch!(:grafana)
         |> Keyword.fetch!(key)
       end
