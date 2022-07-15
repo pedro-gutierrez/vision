@@ -109,10 +109,21 @@ defmodule Vision.Metrics do
           kind = m[:kind]
           labels = labels(m, meta)
           default = default(kind)
-          value = value(m, measurement, default)
+
+          value =
+            m
+            |> value(measurement, default)
+            |> maybe_convert(m[:unit])
+
           export(kind, m[:name], labels, value)
         end
       end
+
+      defp maybe_convert(value, :native_ms) do
+        System.convert_time_unit(value, :native, :millisecond)
+      end
+
+      defp maybe_convert(value, _), do: value
 
       defp export(kind, name, labels, :drop) do
         Logger.warn(
@@ -300,7 +311,7 @@ defmodule Vision.Metrics do
             defaults:
               defaults()
               |> with_customisations(metric)
-              |> with_unit(metric)
+              |> with_grafana_unit(metric)
               |> with_value_mappings(metric)
               |> with_thresholds(metric)
               |> with_max(metric)
@@ -400,12 +411,19 @@ defmodule Vision.Metrics do
         })
       end
 
-      defp with_unit(defaults, metric) do
+      defp with_grafana_unit(defaults, metric) do
         case metric[:unit] do
-          nil -> defaults
-          unit -> Map.put(defaults, :unit, unit)
+          nil ->
+            defaults
+
+          unit ->
+            unit = grafana_unit(unit)
+            Map.put(defaults, :unit, unit)
         end
       end
+
+      defp grafana_unit(:native_ms), do: :ms
+      defp grafana_unit(other), do: other
 
       defp with_value_mappings(defaults, metric) do
         case metric[:map] do
