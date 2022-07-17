@@ -5,7 +5,7 @@ defmodule Vision.MixProject do
     [
       app: :vision,
       version: "0.1.0",
-      elixir: "~> 1.12",
+      elixir: "~> 1.11",
       start_permanent: true,
       deps: deps()
     ]
