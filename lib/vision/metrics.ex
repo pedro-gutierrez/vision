@@ -63,7 +63,7 @@ defmodule Vision.Metrics do
         if grafana_opt(:host) && grafana_opt(:token) do
           upload_dashboards()
         else
-          Logger.warn("Missing grafana configuration. Dashboards won't be uploaded")
+          Logger.debug("Missing grafana configuration. Dashboards won't be uploaded")
         end
       end
 
